@@ -4,6 +4,14 @@ TriggerEvent('esx:getSharedObject', function(obj)
     ESX = obj
 end)
 
+ESX.RegisterUsableItem('cadtablet', function(source)
+
+    local xPlayer = ESX.GetPlayerFromId(source)
+    TriggerClientEvent('disc-mdt:openTablet', source)
+end)
+
+
+
 RegisterServerEvent('disc-mdt:setDarkMode')
 AddEventHandler('disc-mdt:setDarkMode', function(data)
     MySQL.Async.execute('UPDATE users SET darkmode=@state WHERE identifier=@identifier', {
