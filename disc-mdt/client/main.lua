@@ -23,6 +23,7 @@ end)
 local isShowing = false
 
 RegisterCommand('mdt', function()
+    if Config.cmd then
     if not isShowing then
         ESX.TriggerServerCallback('disc-mdt:getUser', function(user)
             SendNUIMessage({
@@ -32,6 +33,7 @@ RegisterCommand('mdt', function()
                 }
             })
         end)
+    end
 
         SendNUIMessage({
             type = "APP_SHOW"
@@ -46,6 +48,59 @@ RegisterCommand('mdt', function()
         isShowing = false
     end
 end)
+
+function enableTablet(enable)
+    SetNuiFocus(true, true)
+    isShowing = true
+    SendNUIMessage({
+            type = "APP_SHOW"
+        })
+end
+
+RegisterNetEvent("disc-mdt:openTablet")
+AddEventHandler("disc-mdt:openTablet", function()
+enableTablet(true)
+end)
+
+RegisterNUICallback('escape', function(data, cb)
+    enableTablet(false)
+    SetNuiFocus(false, false)
+    cb('ok')
+end)
+
+local tabletObjNetID = 0
+function tabletAnim()
+    Citizen.CreateThread(function()
+        if tabEnabled == false then
+            
+            ClearPedSecondaryTask(PlayerPedId())
+            DetachEntity(NetToObj(tabletObjNetID), 1, 1)
+            DeleteEntity(NetToObj(tabletObjNetID))
+            tabletObjNetID = nil
+            currentAction = "none"
+            return
+        end
+       
+        RequestModel(GetHashKey("prop_cs_tablet"))
+        while not HasModelLoaded(GetHashKey("prop_cs_tablet")) do
+            Citizen.Wait(100)
+        end
+ 
+        RequestAnimDict("amb@world_human_seat_wall_tablet@female@base")
+        while not HasAnimDictLoaded("amb@world_human_seat_wall_tablet@female@base") do
+            Citizen.Wait(100)
+        end
+ 
+        local plyCoords = GetOffsetFromEntityInWorldCoords(PlayerPedId(), 0.0, 0.0, -5.0)
+        local objSpawned = CreateObject(GetHashKey("prop_cs_tablet"), plyCoords.x, plyCoords.y, plyCoords.z, 1, 1, 1)
+        Citizen.Wait(1000)
+        local netid = ObjToNet(objSpawned)
+        AttachEntityToEntity(objSpawned, PlayerPedId(), GetPedBoneIndex(PlayerPedId(), 28422), boneCoords.xoff, boneCoords.yoff, boneCoords.zoff, boneCoords.xrot, boneCoords.yrot, boneCoords.zrot, 1, 1, 0, 1, 0, 1)
+        TaskPlayAnim(PlayerPedId(), 1.0, -1, -1, 50, 0, 0, 0, 0) -- 50 = 32 + 16 + 2
+        TaskPlayAnim(PlayerPedId(), "amb@world_human_seat_wall_tablet@female@base", "base", 1.0, -1, -1, 50, 0, 0, 0, 0)
+        tabletObjNetID = netid
+    end)
+end
 
 RegisterNUICallback("CloseUI", function(data, cb)
     isShowing = false
